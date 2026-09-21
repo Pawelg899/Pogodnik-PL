@@ -1,1 +1,61 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06101a"><title>Pogodnik-PL</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css"></head><body><div class="app-shell"><header class="topbar"><div class="brand"><div class="brand-mark">⚡</div><div><strong>POGODNIK</strong><span>POLSKA • LIVE</span></div></div><button class="icon-btn" id="gps">⌖</button></header><main><section class="hero-card"><div class="hero-top"><div><span class="eyebrow" id="status-dot">● ŁĄCZENIE</span><h1 id="condition">Pobieranie danych…</h1><p id="place">Polska • oczekiwanie na lokalizację</p></div><div class="temperature"><span id="t">--</span><sup>°C</sup></div></div><div class="metrics"><div><span>Wilgotność</span><b id="h">--%</b></div><div><span>Wiatr</span><b id="wi">-- km/h</b></div><div><span>Porywy</span><b id="g">-- km/h</b></div><div><span>Ciśnienie</span><b id="p">-- hPa</b></div></div></section><section class="map-card"><div class="map-head"><div><b>RADAR OPADÓW</b><span id="radar-status">ładowanie…</span></div><div class="map-actions"><button class="pill active" id="radarToggle">RADAR</button><button class="pill" id="playRadar">▶</button><button class="pill" id="centerBtn">⌖</button></div></div><div id="map"></div><div class="map-bottom"><span>RainViewer • ostatnie 2 h</span><span id="frameTime">—</span></div></section><section class="source-row"><span class="source active">IMGW</span><span class="source active">RADAR</span><span class="source active">OPEN-METEO</span><span class="source">PERUN</span><span class="source">TSP</span></section><section class="alert-card" id="alertCard"><div class="alert-icon">✓</div><div><b id="alertTitle">Brak aktywnego zagrożenia</b><span id="alertText">Sprawdzam oficjalne ostrzeżenia IMGW.</span></div></section><section class="grid"><div class="data-card"><span>Opad teraz</span><b id="r">-- mm</b></div><div class="data-card"><span>Zachmurzenie</span><b id="c">--%</b></div><div class="data-card"><span>Kierunek wiatru</span><b id="d">--°</b></div><div class="data-card"><span>IMGW ostrzeżenia</span><b id="warningCount">—</b></div></section><section class="warning-card"><div class="section-title"><b>OFICJALNE OSTRZEŻENIA IMGW</b><span>LIVE</span></div><div id="warnings"><div class="muted">Pobieranie…</div></div></section><section class="forecast-card"><div class="section-title"><b>NAJBLIŻSZE GODZINY</b><span>12 h</span></div><div id="f" class="forecast"></div></section><footer>POGODNIK-PL • IMGW-PIB • Open-Meteo • RainViewer • OpenStreetMap</footer></main></div><script src="vendor/leaflet.js"></script><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06101a">
+<title>Pogodnik-PL</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">⚡</div><div><strong>POGODNIK</strong><span>POLSKA • LIVE</span></div></div>
+  <button class="icon-btn" id="gps" title="Użyj GPS">⌖</button>
+</header>
+<main>
+<section class="hero-card">
+  <div class="hero-top">
+    <div><span class="eyebrow" id="status-dot">● ŁĄCZENIE</span><h1 id="condition">Pobieranie danych…</h1><p id="place">Wybierz GPS, adres lub pinezkę</p></div>
+    <div class="temperature"><span id="t">--</span><sup>°C</sup></div>
+  </div>
+  <div class="metrics">
+    <div><span>Wilgotność</span><b id="h">--%</b></div><div><span>Wiatr</span><b id="wi">-- km/h</b></div>
+    <div><span>Porywy</span><b id="g">-- km/h</b></div><div><span>Ciśnienie</span><b id="p">-- hPa</b></div>
+  </div>
+</section>
+
+<section class="location-card">
+  <div class="section-title"><b>LOKALIZACJA</b><span id="locationMode">centrum Polski</span></div>
+  <div class="location-actions">
+    <button class="loc-btn primary" id="useGps">⌖ GPS TELEFONU</button>
+    <button class="loc-btn" id="pinMode">📍 PINEZKA</button>
+  </div>
+  <div class="address-row">
+    <input id="addressInput" type="text" autocomplete="street-address" placeholder="Wpisz dokładny adres…">
+    <button class="loc-btn search" id="addressSearch">USTAW</button>
+  </div>
+  <div class="location-hint" id="locationHint">Możesz też kliknąć mapę, aby ustawić miejsce pobytu lub zamieszkania.</div>
+</section>
+
+<section class="map-card">
+  <div class="map-head"><div><b>RADAR OPADÓW</b><span id="radar-status">ładowanie…</span></div>
+    <div class="map-actions"><button class="pill active" id="radarToggle">RADAR</button><button class="pill" id="playRadar">▶</button><button class="pill" id="centerBtn">⌖</button></div>
+  </div>
+  <div id="map"></div>
+  <div class="map-bottom"><span>RainViewer • ostatnie 2 h</span><span id="frameTime">—</span></div>
+</section>
+
+<section class="source-row"><span class="source active">IMGW</span><span class="source active">RADAR</span><span class="source active">OPEN-METEO</span><span class="source">PERUN</span><span class="source">TSP</span></section>
+<section class="alert-card" id="alertCard"><div class="alert-icon">✓</div><div><b id="alertTitle">Brak aktywnego zagrożenia</b><span id="alertText">Sprawdzam oficjalne ostrzeżenia IMGW.</span></div></section>
+<section class="grid"><div class="data-card"><span>Opad teraz</span><b id="r">-- mm</b></div><div class="data-card"><span>Zachmurzenie</span><b id="c">--%</b></div><div class="data-card"><span>Kierunek wiatru</span><b id="d">--°</b></div><div class="data-card"><span>IMGW ostrzeżenia</span><b id="warningCount">—</b></div></section>
+<section class="warning-card"><div class="section-title"><b>OFICJALNE OSTRZEŻENIA IMGW</b><span>LIVE</span></div><div id="warnings"><div class="muted">Pobieranie…</div></div></section>
+<section class="forecast-card"><div class="section-title"><b>NAJBLIŻSZE GODZINY</b><span>12 h</span></div><div id="f" class="forecast"></div></section>
+<footer>POGODNIK-PL • IMGW-PIB • Open-Meteo • RainViewer • © OpenStreetMap</footer>
+</main>
+</div>
+<script src="vendor/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
