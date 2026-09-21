@@ -18,6 +18,6 @@ jobs:
       - run: npx cap add android
       - run: npx cap sync android
       - run: cd android && ./gradlew assembleDebug
-      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build006.apk
+      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build007.apk
       - uses: actions/upload-artifact@v4
-        with: {name: Pogodnik-PL-v0.2.0-build006, path: release/Pogodnik-PL-v0.2.0-build006.apk}
+        with: {name: Pogodnik-PL-v0.2.0-build007, path: release/Pogodnik-PL-v0.2.0-build007.apk}
