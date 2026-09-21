@@ -30,13 +30,14 @@
   <div class="section-title"><b>LOKALIZACJA</b><span id="locationMode">centrum Polski</span></div>
   <div class="location-actions">
     <button class="loc-btn primary" id="useGps">⌖ GPS TELEFONU</button>
-    <button class="loc-btn" id="pinMode">📍 PINEZKA</button>
+    <button class="loc-btn" id="savePlaceBtn">📍 ZAPISZ MIEJSCE</button>
   </div>
   <div class="address-row">
     <input id="addressInput" type="text" autocomplete="street-address" placeholder="Wpisz dokładny adres…">
     <button class="loc-btn search" id="addressSearch">USTAW</button>
   </div>
-  <div class="location-hint" id="locationHint">Możesz też kliknąć mapę, aby ustawić miejsce pobytu lub zamieszkania.</div>
+  <div class="location-hint" id="locationHint">Kliknij mapę, wpisz adres albo użyj GPS. Potem zapisz miejsce jako Dom, Praca lub Inne.</div>
+  <div id="savedPlaces" class="saved-places"></div>
 </section>
 
 <section class="map-card">
