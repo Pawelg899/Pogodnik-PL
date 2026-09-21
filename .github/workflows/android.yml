@@ -12,11 +12,12 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm install --save-dev typescript
       - run: npx cap add android
       - run: npx cap sync android
       - run: cd android && ./gradlew assembleDebug
-      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.1.0-build003.apk
+      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.1.0-build004.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Pogodnik-PL-v0.1.0-build003
-          path: release/Pogodnik-PL-v0.1.0-build003.apk
+          name: Pogodnik-PL-v0.1.0-build004
+          path: release/Pogodnik-PL-v0.1.0-build004.apk
