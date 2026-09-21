@@ -1,1 +1,75 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><title>Pogodnik-PL</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></head><body><header><b>POGODNIK-PL</b><button id="gps">⌖</button></header><main><section id="status"><b id="st">POBIERANIE…</b><span id="sx">Dane pogodowe</span></section><section class="hero"><strong><span id="t">--</span>°C</strong><div id="w">—<br>Wilgotność <b id="h">--</b>%<br>Wiatr <b id="wi">--</b> km/h · porywy <b id="g">--</b></div></section><section class="grid"><div>Opad <b id="r">--</b> mm</div><div>Ciśnienie <b id="p">--</b> hPa</div><div>Chmury <b id="c">--</b>%</div><div>Kierunek <b id="d">--</b></div></section><section class="map"><b>RADAR</b><div id="map"></div><small>Weather data by RainViewer</small></section><section><b>NAJBLIŻSZE GODZINY</b><div id="f" class="forecast"></div></section></main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07131f">
+  <title>Pogodnik-PL</title>
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">⚡</div>
+        <div><strong>POGODNIK</strong><span>POLSKA • LIVE</span></div>
+      </div>
+      <button class="icon-btn" id="gps" aria-label="Moja lokalizacja">⌖</button>
+    </header>
+
+    <main>
+      <section class="hero-card">
+        <div class="hero-top">
+          <div>
+            <span class="eyebrow" id="status-dot">● AKTUALIZACJA</span>
+            <h1 id="condition">Pobieranie danych…</h1>
+            <p id="place">Polska • lokalizacja domyślna</p>
+          </div>
+          <div class="temperature"><span id="t">--</span><sup>°C</sup></div>
+        </div>
+        <div class="metrics">
+          <div><span>Wilgotność</span><b id="h">--%</b></div>
+          <div><span>Wiatr</span><b id="wi">-- km/h</b></div>
+          <div><span>Porywy</span><b id="g">-- km/h</b></div>
+          <div><span>Ciśnienie</span><b id="p">-- hPa</b></div>
+        </div>
+      </section>
+
+      <section class="map-card">
+        <div class="map-head">
+          <div><b>RADAR OPADÓW</b><span id="radar-status">Ładowanie…</span></div>
+          <div class="map-actions">
+            <button class="pill active" id="radarToggle">RADAR</button>
+            <button class="pill" id="centerBtn">⌖</button>
+          </div>
+        </div>
+        <div id="map"></div>
+        <div class="map-legend"><span><i class="rain"></i> opad</span><span>RainViewer</span></div>
+      </section>
+
+      <section class="alert-card" id="alertCard">
+        <div class="alert-icon">✓</div>
+        <div><b id="alertTitle">Brak aktywnego zagrożenia</b><span id="alertText">Na podstawie dostępnych danych modelowych.</span></div>
+      </section>
+
+      <section class="grid">
+        <div class="data-card"><span>Opad teraz</span><b id="r">-- mm</b></div>
+        <div class="data-card"><span>Zachmurzenie</span><b id="c">--%</b></div>
+        <div class="data-card"><span>Kierunek wiatru</span><b id="d">--°</b></div>
+        <div class="data-card"><span>Źródło</span><b>Open-Meteo</b></div>
+      </section>
+
+      <section class="forecast-card">
+        <div class="section-title"><b>NAJBLIŻSZE GODZINY</b><span>12 h</span></div>
+        <div id="f" class="forecast"></div>
+      </section>
+
+      <footer>POGODNIK-PL • dane: Open-Meteo / RainViewer / OSM</footer>
+    </main>
+  </div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
