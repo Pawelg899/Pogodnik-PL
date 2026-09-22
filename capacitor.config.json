@@ -1,1 +1,1 @@
-{"appId":"pl.pogodnik.app","appName":"Pogodnik-PL","webDir":"www","bundledWebRuntime":false}
+{"appId":"pl.pogodnik.app","appName":"Pogodnik-PL","webDir":"www","bundledWebRuntime":false,"plugins":{"CapacitorHttp":{"enabled":true}}}
