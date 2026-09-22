@@ -17,7 +17,7 @@ jobs:
       - run: mkdir -p www/vendor && cp node_modules/leaflet/dist/leaflet.js www/vendor/leaflet.js && cp node_modules/leaflet/dist/leaflet.css www/vendor/leaflet.css && cp node_modules/leaflet/dist/images/* www/vendor/
       - run: npx cap add android
       - run: npx cap sync android
-      - run: sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
+      - run: sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" /> <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
       - run: cd android && ./gradlew assembleDebug
       - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build014.apk
       - uses: actions/upload-artifact@v4
