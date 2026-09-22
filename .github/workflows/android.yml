@@ -14,11 +14,30 @@ jobs:
         with: {distribution: temurin, java-version: '21'}
       - run: npm install
       - run: npm install --save-dev typescript
+      - run: node --check www/app.js
+      - run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('www/index.html','utf8');
+          const js=fs.readFileSync('www/app.js','utf8');
+          const ids=new Set([...html.matchAll(/id=["']([^"']+)["']/g)].map(m=>m[1]));
+          const refs=[...js.matchAll(/\$\(["']([^"']+)["']\)/g)].map(m=>m[1]);
+          const missing=[...new Set(refs.filter(id=>!ids.has(id)))];
+          if(missing.length){console.error('Missing HTML ids:',missing.join(', '));process.exit(1);}
+          console.log('STATIC_ID_CHECK_OK');
+          NODE
       - run: mkdir -p www/vendor && cp node_modules/leaflet/dist/leaflet.js www/vendor/leaflet.js && cp node_modules/leaflet/dist/leaflet.css www/vendor/leaflet.css && cp node_modules/leaflet/dist/images/* www/vendor/
       - run: npx cap add android
       - run: npx cap sync android
       - run: sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" /> <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
+      - run: |
+          grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.ACCESS_NETWORK_STATE' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.ACCESS_FINE_LOCATION' android/app/src/main/AndroidManifest.xml
+          echo 'MANIFEST_PERMISSIONS_OK'
       - run: cd android && ./gradlew assembleDebug
-      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build014.apk
+      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-build${{ github.run_number }}.apk
       - uses: actions/upload-artifact@v4
-        with: {name: Pogodnik-PL-v0.2.0-build014, path: release/Pogodnik-PL-v0.2.0-build014.apk}
+        with:
+          name: Pogodnik-PL-build${{ github.run_number }}
+          path: release/Pogodnik-PL-build${{ github.run_number }}.apk
