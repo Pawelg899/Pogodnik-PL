@@ -19,6 +19,6 @@ jobs:
       - run: npx cap sync android
       - run: sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
       - run: cd android && ./gradlew assembleDebug
-      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build010.apk
+      - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-v0.2.0-build011.apk
       - uses: actions/upload-artifact@v4
-        with: {name: Pogodnik-PL-v0.2.0-build010, path: release/Pogodnik-PL-v0.2.0-build010.apk}
+        with: {name: Pogodnik-PL-v0.2.0-build011, path: release/Pogodnik-PL-v0.2.0-build011.apk}
