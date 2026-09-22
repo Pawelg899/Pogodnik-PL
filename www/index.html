@@ -48,11 +48,37 @@
   <div class="map-bottom"><span>RainViewer • ostatnie 2 h</span><span id="frameTime">—</span></div>
 </section>
 
-<section class="source-row"><span class="source active">IMGW</span><span class="source active">RADAR</span><span class="source active">OPEN-METEO</span><span class="source">PERUN</span><span class="source">TSP</span></section>
+<section class="source-panel">
+  <div class="section-title"><b>WARSTWY MAPY</b><span id="layerStatus">RADAR</span></div>
+  <div class="source-row layer-row">
+    <button class="source active" id="layerRadar">🌧️ RADAR</button>
+    <button class="source" id="layerPerun">⚡ PERUN</button>
+    <button class="source" id="layerTsp">⛈️ TSP</button>
+    <button class="source" id="layerModel">🌩️ MODEL BURZ</button>
+  </div>
+  <div class="layer-note" id="layerNote">Radar opadów RainViewer — ostatnie 2 h.</div>
+</section>
+<section class="source-row"><span class="source active">IMGW</span><span class="source active">RADAR</span><span class="source active">OPEN-METEO</span></section>
 <section class="alert-card" id="alertCard"><div class="alert-icon">✓</div><div><b id="alertTitle">Brak aktywnego zagrożenia</b><span id="alertText">Sprawdzam oficjalne ostrzeżenia IMGW.</span></div></section>
 <section class="grid"><div class="data-card"><span>Opad teraz</span><b id="r">-- mm</b></div><div class="data-card"><span>Zachmurzenie</span><b id="c">--%</b></div><div class="data-card"><span>Kierunek wiatru</span><b id="d">--°</b></div><div class="data-card"><span>IMGW ostrzeżenia</span><b id="warningCount">—</b></div></section>
 <section class="warning-card"><div class="section-title"><b>OFICJALNE OSTRZEŻENIA IMGW</b><span>LIVE</span></div><div id="warnings"><div class="muted">Pobieranie…</div></div></section>
 <section class="forecast-card"><div class="section-title"><b>NAJBLIŻSZE GODZINY</b><span>12 h</span></div><div id="f" class="forecast"></div></section>
+<div id="meteogramModal" class="meteogram-modal" hidden>
+  <div class="meteogram-card">
+    <div class="meteogram-head">
+      <div><b>METEOGRAM</b><span id="meteogramPlace">—</span></div>
+      <button id="meteogramClose" class="icon-btn">×</button>
+    </div>
+    <div id="meteogramStatus" class="meteogram-status">Pobieranie prognozy…</div>
+    <div class="meteogram-scroll">
+      <div class="chart-title">Temperatura i opad</div><canvas id="chartTempRain"></canvas>
+      <div class="chart-title">Wiatr i porywy</div><canvas id="chartWind"></canvas>
+      <div class="chart-title">Ciśnienie</div><canvas id="chartPressure"></canvas>
+      <div class="chart-title">Wilgotność i zachmurzenie</div><canvas id="chartHumidity"></canvas>
+    </div>
+    <div class="meteogram-foot">Prognoza godzinowa Open-Meteo • wartości modelowe, nie obserwacje.</div>
+  </div>
+</div>
 <footer>POGODNIK-PL • IMGW-PIB • Open-Meteo • RainViewer • © OpenStreetMap</footer>
 </main>
 </div>
