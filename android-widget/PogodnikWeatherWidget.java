@@ -85,7 +85,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                 String url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat +
                         "&longitude=" + lon +
                         "&timezone=auto&forecast_days=5" +
-                        "&current=temperature_2m,weather_code,precipitation,wind_speed_10m" +
+                        "&current=temperature_2m,apparent_temperature,weather_code,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,relative_humidity_2m,cloud_cover" +
                         "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max";
                 JSONObject d = getJson(url);
                 JSONObject cur = d.getJSONObject("current");
@@ -100,7 +100,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
 
                 String place = getPrefs(app).getString("name", "Moja lokalizacja");
                 String temp = Math.round(cur.getDouble("temperature_2m")) + "°";
-                String condition = condition(cur.getInt("weather_code"));
+                String condition = condition(cur.getInt("weather_code"));\n                String currentIcon = icon(cur.getInt("weather_code"));\n                String feels = Math.round(cur.getDouble("apparent_temperature")) + "°C";\n                String windDir = windDirName(cur.getDouble("wind_direction_10m"));\n                String gust = Math.round(cur.getDouble("wind_gusts_10m")) + " km/h";\n                String pressure = Math.round(cur.getDouble("pressure_msl")) + " hPa";\n                String humidity = Math.round(cur.getDouble("relative_humidity_2m")) + "%";\n                String clouds = Math.round(cur.getDouble("cloud_cover")) + "%";\n                String rainChance = Math.round(cur.optDouble("precipitation_probability", 0)) + "%";
                 String rainNow = "Opad " + one(cur.getDouble("precipitation")) + " mm";
                 String wind = "Wiatr " + Math.round(cur.getDouble("wind_speed_10m")) + " km/h";
                 String updated = "Aktualizacja  •  " + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
@@ -112,7 +112,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                     RemoteViews v = new RemoteViews(app.getPackageName(), R.layout.widget_weather);
                     v.setTextViewText(R.id.widget_place, place);
                     v.setTextViewText(R.id.widget_temp, temp);
-                    v.setTextViewText(R.id.widget_condition, condition);
+                    v.setTextViewText(R.id.widget_condition, condition);\n                    v.setTextViewText(R.id.widget_icon, currentIcon);\n                    v.setTextViewText(R.id.widget_feels, "Odczuwalna " + feels);\n                    v.setTextViewText(R.id.widget_wind_detail, "z " + windDir + "\n" + Math.round(cur.getDouble("wind_speed_10m")) + " km/h");\n                    v.setTextViewText(R.id.widget_gust, "Porywy " + gust);\n                    v.setTextViewText(R.id.widget_rain_detail, one(cur.getDouble("precipitation")) + " mm\n— " + rainChance);\n                    v.setTextViewText(R.id.widget_pressure, pressure);\n                    v.setTextViewText(R.id.widget_humidity, humidity);\n                    v.setTextViewText(R.id.widget_clouds, clouds);
                     v.setTextViewText(R.id.widget_updated, updated);
                     v.setTextViewText(R.id.widget_rain, rainNow);
                     v.setTextViewText(R.id.widget_wind, wind);
@@ -287,7 +287,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         }
     }
 
-    private static String icon(int c) {
+    private static String windDirName(double deg) {\n        double d = ((deg % 360) + 360) % 360;\n        String[] dirs = {"północy","północnego wschodu","wschodu","południowego wschodu","południa","południowego zachodu","zachodu","północnego zachodu"};\n        return dirs[(int)Math.round(d / 45.0) % 8];\n    }\n\n    private static String icon(int c) {
         if (c == 0) return "☀";
         if (c == 1) return "🌤";
         if (c == 2) return "⛅";
