@@ -112,7 +112,15 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                     RemoteViews v = new RemoteViews(app.getPackageName(), R.layout.widget_weather);
                     v.setTextViewText(R.id.widget_place, place);
                     v.setTextViewText(R.id.widget_temp, temp);
-                    v.setTextViewText(R.id.widget_condition, condition);\n                    v.setTextViewText(R.id.widget_icon, currentIcon);\n                    v.setTextViewText(R.id.widget_feels, "Odczuwalna " + feels);\n                    v.setTextViewText(R.id.widget_wind_detail, "z " + windDir + "\n" + Math.round(cur.getDouble("wind_speed_10m")) + " km/h");\n                    v.setTextViewText(R.id.widget_gust, "Porywy " + gust);\n                    v.setTextViewText(R.id.widget_rain_detail, one(cur.getDouble("precipitation")) + " mm\n— " + rainChance);\n                    v.setTextViewText(R.id.widget_pressure, pressure);\n                    v.setTextViewText(R.id.widget_humidity, humidity);\n                    v.setTextViewText(R.id.widget_clouds, clouds);
+                    v.setTextViewText(R.id.widget_condition, condition);
+                    v.setTextViewText(R.id.widget_icon, currentIcon);
+                    v.setTextViewText(R.id.widget_feels, "Odczuwalna " + feels);
+                    v.setTextViewText(R.id.widget_wind_detail, "z " + windDir + "\n" + Math.round(cur.getDouble("wind_speed_10m")) + " km/h");
+                    v.setTextViewText(R.id.widget_gust, "Porywy " + gust);
+                    v.setTextViewText(R.id.widget_rain_detail, one(cur.getDouble("precipitation")) + " mm\n— " + rainChance);
+                    v.setTextViewText(R.id.widget_pressure, pressure);
+                    v.setTextViewText(R.id.widget_humidity, humidity);
+                    v.setTextViewText(R.id.widget_clouds, clouds);
                     v.setTextViewText(R.id.widget_updated, updated);
                     v.setTextViewText(R.id.widget_rain, rainNow);
                     v.setTextViewText(R.id.widget_wind, wind);
