@@ -171,7 +171,6 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     }
 
     private static Bitmap buildRadarMap(Context c, double lat, double lon) {
-        HttpURLConnection metaConn = null;
         try {
             JSONObject meta = getJson("https://api.rainviewer.com/public/weather-maps.json");
             JSONArray past = meta.getJSONObject("radar").getJSONArray("past");
@@ -207,9 +206,11 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
             dot.setColor(Color.rgb(32, 139, 255));
             canvas.drawCircle(px, py, 8f, dot);
 
-            Bitmap out = Bitmap.createBitmap(512, 300, Bitmap.Config.ARGB_8888);
-            Canvas crop = new Canvas(out);
-            crop.drawBitmap(base, 0, 0, null);
+            float centerX = (float)(lonToPixel(lon, MAP_ZOOM) - (x - 1) * TILE);
+            float centerY = (float)(latToPixel(lat, MAP_ZOOM) - (y - 1) * TILE);
+            int left = Math.max(0, Math.min(base.getWidth() - 512, Math.round(centerX - 256f)));
+            int top = Math.max(0, Math.min(base.getHeight() - 300, Math.round(centerY - 150f)));
+            Bitmap out = Bitmap.createBitmap(base, left, top, 512, 300);
             return out;
         } catch (Exception ignored) {
             return null;
