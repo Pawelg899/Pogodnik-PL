@@ -68,8 +68,8 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         v.setTextViewText(R.id.widget_temp, "—°");
         v.setTextViewText(R.id.widget_condition, "Pobieranie pogody…");
         v.setTextViewText(R.id.widget_updated, "Aktualizacja…");
-        v.setTextViewText(R.id.widget_rain, "Opad —");
-        v.setTextViewText(R.id.widget_wind, "Wiatr —");
+        v.setTextViewText(R.id.widget_rain_detail, "—");
+        v.setTextViewText(R.id.widget_wind_detail, "—");
         setClicks(c, v);
         m.updateAppWidget(id, v);
     }
@@ -130,8 +130,8 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                     v.setTextViewText(R.id.widget_humidity, humidity);
                     v.setTextViewText(R.id.widget_clouds, clouds);
                     v.setTextViewText(R.id.widget_updated, updated);
-                    v.setTextViewText(R.id.widget_rain, rainNow);
-                    v.setTextViewText(R.id.widget_wind, wind);
+                    v.setTextViewText(R.id.widget_rain_detail, rainNow);
+                    v.setTextViewText(R.id.widget_wind_detail, wind);
                     if (radar != null) v.setImageViewBitmap(R.id.widget_radar, radar);
 
                     int[] dayIds = {R.id.day1Label,R.id.day2Label,R.id.day3Label,R.id.day4Label,R.id.day5Label};
