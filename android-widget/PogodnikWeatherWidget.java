@@ -287,7 +287,13 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         }
     }
 
-    private static String windDirName(double deg) {\n        double d = ((deg % 360) + 360) % 360;\n        String[] dirs = {"północy","północnego wschodu","wschodu","południowego wschodu","południa","południowego zachodu","zachodu","północnego zachodu"};\n        return dirs[(int)Math.round(d / 45.0) % 8];\n    }\n\n    private static String icon(int c) {
+    private static String windDirName(double deg) {
+        double d = ((deg % 360) + 360) % 360;
+        String[] dirs = {"północy","północnego wschodu","wschodu","południowego wschodu","południa","południowego zachodu","zachodu","północnego zachodu"};
+        return dirs[(int)Math.round(d / 45.0) % 8];
+    }
+
+    private static String icon(int c) {
         if (c == 0) return "☀";
         if (c == 1) return "🌤";
         if (c == 2) return "⛅";
