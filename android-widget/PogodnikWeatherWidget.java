@@ -110,7 +110,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                     v.setTextViewText(R.id.widget_updated, updated);
                     v.setTextViewText(R.id.widget_rain, rainNow);
                     v.setTextViewText(R.id.widget_wind, wind);
-                    int[] dayIds = {R.id.day1,R.id.day2,R.id.day3,R.id.day4,R.id.day5};
+                    int[] dayIds = {R.id.day1Label,R.id.day2Label,R.id.day3Label,R.id.day4Label,R.id.day5Label};
                     int[] iconIds = {R.id.icon1,R.id.icon2,R.id.icon3,R.id.icon4,R.id.icon5};
                     int[] maxIds = {R.id.max1,R.id.max2,R.id.max3,R.id.max4,R.id.max5};
                     int[] minIds = {R.id.min1,R.id.min2,R.id.min3,R.id.min4,R.id.min5};
