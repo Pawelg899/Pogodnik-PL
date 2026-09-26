@@ -82,7 +82,7 @@ jobs:
           ]
           for perm in perms:
               if perm not in s:
-                  s=s.replace("<application", f'<uses-permission android:name="{perm}" />\\n    <application', 1)
+                  s=s.replace("<application", f'<uses-permission android:name="{perm}" />\n    <application', 1)
           p.write_text(s)
           PY
           test "$(grep -c 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml)" -eq 1
