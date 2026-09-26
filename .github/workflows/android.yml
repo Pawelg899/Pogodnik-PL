@@ -69,11 +69,26 @@ jobs:
           PY
           grep -q 'PogodnikWeatherWidget' android/app/src/main/AndroidManifest.xml
           echo 'WIDGET_MANIFEST_OK'
-      - run: sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" /> <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
       - run: |
-          grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
-          grep -q 'android.permission.ACCESS_NETWORK_STATE' android/app/src/main/AndroidManifest.xml
-          grep -q 'android.permission.ACCESS_FINE_LOCATION' android/app/src/main/AndroidManifest.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android/app/src/main/AndroidManifest.xml")
+          s=p.read_text()
+          perms=[
+              "android.permission.INTERNET",
+              "android.permission.ACCESS_NETWORK_STATE",
+              "android.permission.ACCESS_FINE_LOCATION",
+              "android.permission.ACCESS_COARSE_LOCATION",
+          ]
+          for perm in perms:
+              if perm not in s:
+                  s=s.replace("<application", f'<uses-permission android:name="{perm}" />\\n    <application', 1)
+          p.write_text(s)
+          PY
+          test "$(grep -c 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml)" -eq 1
+          test "$(grep -c 'android.permission.ACCESS_NETWORK_STATE' android/app/src/main/AndroidManifest.xml)" -eq 1
+          test "$(grep -c 'android.permission.ACCESS_FINE_LOCATION' android/app/src/main/AndroidManifest.xml)" -eq 1
+          test "$(grep -c 'android.permission.ACCESS_COARSE_LOCATION' android/app/src/main/AndroidManifest.xml)" -eq 1
           echo 'MANIFEST_PERMISSIONS_OK'
       - run: cd android && ./gradlew assembleDebug
       - run: mkdir -p release && cp android/app/build/outputs/apk/debug/app-debug.apk release/Pogodnik-PL-build${{ github.run_number }}.apk
