@@ -29,6 +29,46 @@ jobs:
       - run: mkdir -p www/vendor && cp node_modules/leaflet/dist/leaflet.js www/vendor/leaflet.js && cp node_modules/leaflet/dist/leaflet.css www/vendor/leaflet.css && cp node_modules/leaflet/dist/images/* www/vendor/
       - run: npx cap add android
       - run: npx cap sync android
+      - run: |
+          mkdir -p android/app/src/main/java/pl/pogodnik/app
+          mkdir -p android/app/src/main/res/layout android/app/src/main/res/drawable android/app/src/main/res/xml
+          cp android-widget/PogodnikWeatherWidget.java android/app/src/main/java/pl/pogodnik/app/
+          cp android-widget/PogodnikWidgetPlugin.java android/app/src/main/java/pl/pogodnik/app/
+          cp android-widget/widget_weather.xml android/app/src/main/res/layout/widget_weather.xml
+          cp android-widget/widget_bg.xml android/app/src/main/res/drawable/widget_bg.xml
+          cp android-widget/widget_button.xml android/app/src/main/res/drawable/widget_button.xml
+          cp android-widget/widget_info.xml android/app/src/main/res/xml/widget_info.xml
+          cat > android/app/src/main/java/pl/pogodnik/app/MainActivity.java <<'JAVA'
+          package pl.pogodnik.app;
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(PogodnikWidgetPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          JAVA
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android/app/src/main/AndroidManifest.xml")
+          s=p.read_text()
+          receiver='''<receiver android:name=".PogodnikWeatherWidget" android:exported="true">
+              <intent-filter>
+                  <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                  <action android:name="pl.pogodnik.app.WIDGET_REFRESH" />
+              </intent-filter>
+              <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info" />
+          </receiver>'''
+          marker='</application>'
+          if 'PogodnikWeatherWidget' not in s:
+              s=s.replace(marker, receiver+'\n    '+marker)
+          p.write_text(s)
+          PY
+          grep -q 'PogodnikWeatherWidget' android/app/src/main/AndroidManifest.xml
+          echo 'WIDGET_MANIFEST_OK'
       - run: sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" /> <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <application#' android/app/src/main/AndroidManifest.xml
       - run: |
           grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
