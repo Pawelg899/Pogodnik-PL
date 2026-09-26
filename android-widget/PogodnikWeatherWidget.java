@@ -100,7 +100,15 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
 
                 String place = getPrefs(app).getString("name", "Moja lokalizacja");
                 String temp = Math.round(cur.getDouble("temperature_2m")) + "°";
-                String condition = condition(cur.getInt("weather_code"));\n                String currentIcon = icon(cur.getInt("weather_code"));\n                String feels = Math.round(cur.getDouble("apparent_temperature")) + "°C";\n                String windDir = windDirName(cur.getDouble("wind_direction_10m"));\n                String gust = Math.round(cur.getDouble("wind_gusts_10m")) + " km/h";\n                String pressure = Math.round(cur.getDouble("pressure_msl")) + " hPa";\n                String humidity = Math.round(cur.getDouble("relative_humidity_2m")) + "%";\n                String clouds = Math.round(cur.getDouble("cloud_cover")) + "%";\n                String rainChance = Math.round(cur.optDouble("precipitation_probability", 0)) + "%";
+                String condition = condition(cur.getInt("weather_code"));
+                String currentIcon = icon(cur.getInt("weather_code"));
+                String feels = Math.round(cur.getDouble("apparent_temperature")) + "°C";
+                String windDir = windDirName(cur.getDouble("wind_direction_10m"));
+                String gust = Math.round(cur.getDouble("wind_gusts_10m")) + " km/h";
+                String pressure = Math.round(cur.getDouble("pressure_msl")) + " hPa";
+                String humidity = Math.round(cur.getDouble("relative_humidity_2m")) + "%";
+                String clouds = Math.round(cur.getDouble("cloud_cover")) + "%";
+                String rainChance = Math.round(cur.optDouble("precipitation_probability", 0)) + "%";
                 String rainNow = "Opad " + one(cur.getDouble("precipitation")) + " mm";
                 String wind = "Wiatr " + Math.round(cur.getDouble("wind_speed_10m")) + " km/h";
                 String updated = "Aktualizacja  •  " + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
