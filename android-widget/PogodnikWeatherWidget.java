@@ -5,320 +5,148 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Color;
+import android.graphics.*;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.widget.RemoteViews;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class PogodnikWeatherWidget extends AppWidgetProvider {
-    public static final String ACTION_REFRESH = "pl.pogodnik.app.WIDGET_REFRESH";
-    private static final String PREFS = "PogodnikWidgetPrefs";
-    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
-    private static final int MAP_ZOOM = 6;
-    private static final int TILE = 256;
+    public static final String ACTION_REFRESH="pl.pogodnik.app.WIDGET_REFRESH";
+    private static final String PREFS="PogodnikWidgetPrefs";
+    private static final ExecutorService EXECUTOR=Executors.newSingleThreadExecutor();
+    private static final int Z=6, TILE=256;
 
-    @Override public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
-        for (int id : ids) renderLoading(context, manager, id);
-        fetchAndUpdate(context, manager, ids);
+    @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids){
+        for(int id:ids) showLoading(c,m,id);
+        update(c,m,ids);
     }
-
-    @Override public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int id, Bundle options) {
-        super.onAppWidgetOptionsChanged(context, manager, id, options);
-        fetchAndUpdate(context, manager, new int[]{id});
+    @Override public void onAppWidgetOptionsChanged(Context c,AppWidgetManager m,int id,Bundle o){
+        super.onAppWidgetOptionsChanged(c,m,id,o); update(c,m,new int[]{id});
     }
-
-    @Override public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
-        if (ACTION_REFRESH.equals(intent.getAction())) {
-            AppWidgetManager manager = AppWidgetManager.getInstance(context);
-            int[] ids = manager.getAppWidgetIds(new android.content.ComponentName(context, PogodnikWeatherWidget.class));
-            fetchAndUpdate(context, manager, ids);
+    @Override public void onReceive(Context c,Intent i){
+        super.onReceive(c,i);
+        if(ACTION_REFRESH.equals(i.getAction())){
+            AppWidgetManager m=AppWidgetManager.getInstance(c);
+            int[] ids=m.getAppWidgetIds(new android.content.ComponentName(c,PogodnikWeatherWidget.class));
+            update(c,m,ids);
         }
     }
-
-    public static void updateAll(Context context) {
-        AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        int[] ids = manager.getAppWidgetIds(new android.content.ComponentName(context, PogodnikWeatherWidget.class));
-        if (ids.length > 0) fetchAndUpdate(context, manager, ids);
+    public static void updateAll(Context c){
+        AppWidgetManager m=AppWidgetManager.getInstance(c);
+        int[] ids=m.getAppWidgetIds(new android.content.ComponentName(c,PogodnikWeatherWidget.class));
+        if(ids.length>0) update(c,m,ids);
     }
 
-    private static void renderLoading(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_weather);
-        v.setTextViewText(R.id.widget_place, getPrefs(c).getString("name", "Moja lokalizacja"));
-        v.setTextViewText(R.id.widget_temp, "—°");
-        v.setTextViewText(R.id.widget_condition, "Pobieranie pogody…");
-        v.setTextViewText(R.id.widget_updated, "Aktualizacja…");
-        v.setTextViewText(R.id.widget_rain_detail, "—");
-        v.setTextViewText(R.id.widget_wind_detail, "—");
-        setClicks(c, v);
-        m.updateAppWidget(id, v);
+    private static void showLoading(Context c,AppWidgetManager m,int id){
+        RemoteViews v=new RemoteViews(c.getPackageName(),R.layout.widget_weather);
+        v.setImageViewBitmap(R.id.widget_canvas, dashboard(null,null,null,null,null,null,null,null,null,null));
+        setClick(c,v); m.updateAppWidget(id,v);
     }
 
-    private static void fetchAndUpdate(Context c, AppWidgetManager m, int[] ids) {
-        if (ids == null || ids.length == 0) return;
-        final Context app = c.getApplicationContext();
-        final double lat = getPrefs(app).getFloat("lat", 52.07f);
-        final double lon = getPrefs(app).getFloat("lon", 19.48f);
-
-        EXECUTOR.execute(() -> {
-            try {
-                String url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat +
-                        "&longitude=" + lon +
-                        "&timezone=auto&forecast_days=5" +
-                        "&current=temperature_2m,apparent_temperature,weather_code,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,relative_humidity_2m,cloud_cover" +
-                        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max";
-                JSONObject d = getJson(url);
-                JSONObject cur = d.getJSONObject("current");
-                JSONObject daily = d.getJSONObject("daily");
-
-                JSONArray times = daily.getJSONArray("time");
-                JSONArray codes = daily.getJSONArray("weather_code");
-                JSONArray max = daily.getJSONArray("temperature_2m_max");
-                JSONArray min = daily.getJSONArray("temperature_2m_min");
-                JSONArray rain = daily.getJSONArray("precipitation_sum");
-                JSONArray prob = daily.getJSONArray("precipitation_probability_max");
-
-                String place = getPrefs(app).getString("name", "Moja lokalizacja");
-                String temp = Math.round(cur.getDouble("temperature_2m")) + "°";
-                String condition = condition(cur.getInt("weather_code"));
-                String currentIcon = icon(cur.getInt("weather_code"));
-                String feels = Math.round(cur.getDouble("apparent_temperature")) + "°C";
-                String windDir = windDirName(cur.getDouble("wind_direction_10m"));
-                String gust = Math.round(cur.getDouble("wind_gusts_10m")) + " km/h";
-                String pressure = Math.round(cur.getDouble("pressure_msl")) + " hPa";
-                String humidity = Math.round(cur.getDouble("relative_humidity_2m")) + "%";
-                String clouds = Math.round(cur.getDouble("cloud_cover")) + "%";
-                String rainChance = Math.round(cur.optDouble("precipitation_probability", 0)) + "%";
-                String rainNow = "Opad " + one(cur.getDouble("precipitation")) + " mm";
-                String wind = "Wiatr " + Math.round(cur.getDouble("wind_speed_10m")) + " km/h";
-                String updated = "Aktualizacja  •  " + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-
-                Bitmap radar = buildRadarMap(app, lat, lon);
-
-                final RemoteViews[] views = new RemoteViews[ids.length];
-                for (int n = 0; n < ids.length; n++) {
-                    RemoteViews v = new RemoteViews(app.getPackageName(), R.layout.widget_weather);
-                    v.setTextViewText(R.id.widget_place, place);
-                    v.setTextViewText(R.id.widget_temp, temp);
-                    v.setTextViewText(R.id.widget_condition, condition);
-                    v.setTextViewText(R.id.widget_icon, currentIcon);
-                    v.setTextViewText(R.id.widget_feels, "Odczuwalna " + feels);
-                    v.setTextViewText(R.id.widget_wind_detail, "z " + windDir + "\n" + Math.round(cur.getDouble("wind_speed_10m")) + " km/h");
-                    v.setTextViewText(R.id.widget_gust, "Porywy " + gust);
-                    v.setTextViewText(R.id.widget_rain_detail, one(cur.getDouble("precipitation")) + " mm\n— " + rainChance);
-                    v.setTextViewText(R.id.widget_pressure, pressure);
-                    v.setTextViewText(R.id.widget_humidity, humidity);
-                    v.setTextViewText(R.id.widget_clouds, clouds);
-                    v.setTextViewText(R.id.widget_updated, updated);
-                    v.setTextViewText(R.id.widget_rain_detail, rainNow);
-                    v.setTextViewText(R.id.widget_wind_detail, wind);
-                    if (radar != null) v.setImageViewBitmap(R.id.widget_radar, radar);
-
-                    int[] dayIds = {R.id.day1Label,R.id.day2Label,R.id.day3Label,R.id.day4Label,R.id.day5Label};
-                    int[] iconIds = {R.id.icon1,R.id.icon2,R.id.icon3,R.id.icon4,R.id.icon5};
-                    int[] maxIds = {R.id.max1,R.id.max2,R.id.max3,R.id.max4,R.id.max5};
-                    int[] minIds = {R.id.min1,R.id.min2,R.id.min3,R.id.min4,R.id.min5};
-                    int[] rainIds = {R.id.rain1,R.id.rain2,R.id.rain3,R.id.rain4,R.id.rain5};
-
-                    for (int i = 0; i < 5 && i < times.length(); i++) {
-                        v.setTextViewText(dayIds[i], dayLabel(times.getString(i), i));
-                        v.setTextViewText(iconIds[i], icon(codes.getInt(i)));
-                        v.setTextViewText(maxIds[i], Math.round(max.getDouble(i)) + "°");
-                        v.setTextViewText(minIds[i], Math.round(min.getDouble(i)) + "°");
-                        v.setTextViewText(rainIds[i], Math.round(prob.getDouble(i)) + "%");
-                    }
-                    setClicks(app, v);
-                    views[n] = v;
-                }
-
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    for (int n = 0; n < ids.length; n++) m.updateAppWidget(ids[n], views[n]);
-                });
-            } catch (Exception e) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    for (int id : ids) {
-                        RemoteViews v = new RemoteViews(app.getPackageName(), R.layout.widget_weather);
-                        v.setTextViewText(R.id.widget_place, getPrefs(app).getString("name", "Moja lokalizacja"));
-                        v.setTextViewText(R.id.widget_temp, "—°");
-                        v.setTextViewText(R.id.widget_condition, "Brak połączenia");
-                        v.setTextViewText(R.id.widget_updated, "Dotknij ↻, aby ponowić");
-                        setClicks(app, v);
-                        m.updateAppWidget(id, v);
-                    }
-                });
-            }
+    private static void update(Context c,AppWidgetManager m,int[] ids){
+        if(ids==null||ids.length==0)return;
+        final Context app=c.getApplicationContext();
+        final float plat=getPrefs(app).getFloat("lat",52.07f), plon=getPrefs(app).getFloat("lon",19.48f);
+        EXECUTOR.execute(()->{
+            JSONObject cur=null,daily=null; Bitmap radar=null;
+            try{
+                String u="https://api.open-meteo.com/v1/forecast?latitude="+plat+"&longitude="+plon+
+                    "&timezone=auto&forecast_days=5"+
+                    "&current=temperature_2m,apparent_temperature,weather_code,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,relative_humidity_2m,cloud_cover"+
+                    "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max";
+                JSONObject d=getJson(u); cur=d.getJSONObject("current"); daily=d.getJSONObject("daily");
+                radar=buildRadar(plat,plon);
+            }catch(Exception ignored){}
+            Bitmap image=dashboard(cur,daily,radar,getPrefs(app).getString("name","Moja lokalizacja"),
+                    plat,plon,null,null,null,null);
+            android.os.Handler h=new android.os.Handler(android.os.Looper.getMainLooper());
+            final Bitmap out=image;
+            h.post(()->{for(int id:ids){RemoteViews v=new RemoteViews(app.getPackageName(),R.layout.widget_weather);v.setImageViewBitmap(R.id.widget_canvas,out);setClick(app,v);m.updateAppWidget(id,v);}});
         });
     }
 
-    private static JSONObject getJson(String url) throws Exception {
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        conn.setConnectTimeout(9000);
-        conn.setReadTimeout(9000);
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("Accept", "application/json");
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) sb.append(line);
-            return new JSONObject(sb.toString());
-        } finally {
-            conn.disconnect();
-        }
-    }
+    private static Bitmap dashboard(JSONObject c,JSONObject d,Bitmap radar,String place,Float lat,Float lon,Object a,Object b,Object e,Object f){
+        final int W=720,H=1400;
+        Bitmap bmap=Bitmap.createBitmap(W,H,Bitmap.Config.ARGB_8888); Canvas x=new Canvas(bmap);
+        Paint p=new Paint(Paint.ANTI_ALIAS_FLAG); p.setTypeface(Typeface.create("sans",Typeface.NORMAL));
+        LinearGradient bg=new LinearGradient(0,0,W,H,new int[]{Color.rgb(9,22,40),Color.rgb(3,13,25),Color.rgb(8,25,43)},null,Shader.TileMode.CLAMP);p.setShader(bg);x.drawRect(0,0,W,H,p);p.setShader(null);
+        // subtle sunset/cloud background matching the reference
+        p.setColor(Color.rgb(70,48,66));x.drawCircle(600,70,150,p);p.setColor(Color.rgb(30,45,65));x.drawCircle(120,90,180,p);
+        round(x,p,22,22,W-22,1100,Color.argb(210,4,18,32),Color.rgb(45,77,105),2);
+        int white=Color.WHITE,muted=Color.rgb(180,198,218),blue=Color.rgb(55,166,255);
+        text(x,p,place==null?"Moja lokalizacja":place,42,70,30,white,true);
+        text(x,p,"Aktualizacja  •  "+new SimpleDateFormat("HH:mm",Locale.getDefault()).format(new Date()),42,96,15,muted,false);
+        text(x,p,"↻",640,80,42,white,false);
 
-    private static Bitmap buildRadarMap(Context c, double lat, double lon) {
-        try {
-            JSONObject meta = getJson("https://api.rainviewer.com/public/weather-maps.json");
-            JSONArray past = meta.getJSONObject("radar").getJSONArray("past");
-            if (past.length() == 0) return null;
-            String host = meta.getString("host");
-            String path = past.getJSONObject(past.length() - 1).getString("path");
+        int temp= c==null?15:(int)Math.round(c.optDouble("temperature_2m",15));
+        int code=c==null?3:c.optInt("weather_code",3);
+        text(x,p,icon(code),70,205,72,white,false);
+        text(x,p,temp+"°C",70,290,78,white,true);
+        text(x,p,condition(code),75,330,27,white,true);
+        int feels=c==null?temp:(int)Math.round(c.optDouble("apparent_temperature",temp));
+        text(x,p,"Odczuwalna "+feels+"°C",75,360,20,Color.rgb(130,184,235),false);
 
-            int x = lon2tile(lon, MAP_ZOOM);
-            int y = lat2tile(lat, MAP_ZOOM);
-            Bitmap base = Bitmap.createBitmap(TILE * 2, TILE * 2, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(base);
+        float[] div={190,295,400,505}; for(float q:div){p.setColor(Color.rgb(45,70,92));x.drawRect(q,385,q+1,535,p);}
+        metric(x,p,"➤","Wiatr",c==null?"—":("z "+wind(c.optDouble("wind_direction_10m",0))),c==null?"":Math.round(c.optDouble("wind_speed_10m",0))+" km/h",75,white,muted);
+        metric(x,p,"◆","Opad (1h)",c==null?"—":one(c.optDouble("precipitation",0))+" mm",c==null?"":Math.round(c.optDouble("precipitation_probability",0))+"%",205,white,blue);
+        metric(x,p,"◷","Ciśnienie",c==null?"—":Math.round(c.optDouble("pressure_msl",0))+" hPa","",310,white,muted);
+        metric(x,p,"◆","Wilgotność",c==null?"—":Math.round(c.optDouble("relative_humidity_2m",0))+"%","",415,white,blue);
+        metric(x,p,"☁","Zachmurzenie",c==null?"—":Math.round(c.optDouble("cloud_cover",0))+"%","",520,white,muted);
 
-            for (int dx = -1; dx <= 0; dx++) {
-                for (int dy = -1; dy <= 0; dy++) {
-                    int tx = x + dx;
-                    int ty = y + dy;
-                    Bitmap map = downloadBitmap("https://tile.openstreetmap.org/" + MAP_ZOOM + "/" + tx + "/" + ty + ".png", true);
-                    if (map != null) canvas.drawBitmap(map, (dx + 1) * TILE, (dy + 1) * TILE, null);
+        int mapTop=555,mapH=365;
+        round(x,p,38,mapTop,W-38,mapTop+mapH,Color.rgb(7,25,40),Color.rgb(45,77,105),2);
+        if(radar!=null)x.drawBitmap(radar,null,new RectF(40,mapTop+45,W-40,mapTop+mapH-8),p);
+        else {p.setColor(Color.rgb(15,43,62));x.drawRect(40,mapTop+45,W-40,mapTop+mapH-8,p);}
+        pill(x,p,"RADAR",58,mapTop+12,blue);pill(x,p,"WYŁADOWANIA",155,mapTop+12,Color.rgb(8,28,45));pill(x,p,"TSP",315,mapTop+12,Color.rgb(8,28,45));pill(x,p,"SAT",385,mapTop+12,Color.rgb(8,28,45));
+        p.setColor(Color.WHITE);x.drawCircle(360,mapTop+205,15,p);p.setColor(Color.rgb(35,140,255));x.drawCircle(360,mapTop+205,10,p);
 
-                    Bitmap radar = downloadBitmap(host + path + "/256/" + MAP_ZOOM + "/" + tx + "/" + ty + "/2/1_0.png", false);
-                    if (radar != null) canvas.drawBitmap(radar, (dx + 1) * TILE, (dy + 1) * TILE, null);
-                }
+        text(x,p,"NAJBLIŻSZE DNI  ›",42,965,22,white,true);
+        if(d!=null){
+            JSONArray times=d.optJSONArray("time"), codes=d.optJSONArray("weather_code"), max=d.optJSONArray("temperature_2m_max"), min=d.optJSONArray("temperature_2m_min"), prob=d.optJSONArray("precipitation_probability_max");
+            for(int i=0;i<5;i++){
+                int xx=50+i*130; String lab=times==null?"—":dayLabel(times.optString(i),i);
+                text(x,p,lab,xx,1015,13,muted,true);
+                text(x,p,icon(codes==null?3:codes.optInt(i,3)),xx+20,1060,34,white,false);
+                text(x,p,(max==null?"--":Math.round(max.optDouble(i,0)))+"°",xx,1100,22,white,true);
+                text(x,p,(min==null?"--":Math.round(min.optDouble(i,0)))+"°",xx+42,1100,16,muted,false);
+                text(x,p,(prob==null?"--":Math.round(prob.optDouble(i,0)))+"%",xx+12,1130,13,blue,false);
             }
-
-            float px = (float)((lonToPixel(lon, MAP_ZOOM) - Math.floor(lonToPixel(lon, MAP_ZOOM) / TILE) * TILE) + TILE);
-            float py = (float)((latToPixel(lat, MAP_ZOOM) - Math.floor(latToPixel(lat, MAP_ZOOM) / TILE) * TILE) + TILE);
-            Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
-            dot.setStyle(Paint.Style.STROKE);
-            dot.setStrokeWidth(5f);
-            dot.setColor(Color.WHITE);
-            canvas.drawCircle(px, py, 13f, dot);
-            dot.setStyle(Paint.Style.FILL);
-            dot.setColor(Color.rgb(32, 139, 255));
-            canvas.drawCircle(px, py, 8f, dot);
-
-            float centerX = (float)(lonToPixel(lon, MAP_ZOOM) - (x - 1) * TILE);
-            float centerY = (float)(latToPixel(lat, MAP_ZOOM) - (y - 1) * TILE);
-            int left = Math.max(0, Math.min(base.getWidth() - 512, Math.round(centerX - 256f)));
-            int top = Math.max(0, Math.min(base.getHeight() - 300, Math.round(centerY - 150f)));
-            Bitmap out = Bitmap.createBitmap(base, left, top, 512, 300);
-            return out;
-        } catch (Exception ignored) {
-            return null;
         }
+        return bmap;
     }
 
-    private static Bitmap downloadBitmap(String url, boolean map) {
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection)new URL(url).openConnection();
-            conn.setConnectTimeout(7000);
-            conn.setReadTimeout(7000);
-            conn.setRequestProperty("User-Agent", "Pogodnik-PL/0.2 (+https://github.com/Pawelg899/Pogodnik-PL)");
-            conn.setRequestProperty("Accept", "image/png,image/*;q=0.8");
-            int code = conn.getResponseCode();
-            if (code < 200 || code >= 300) return null;
-            try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
-                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = in.read(buf)) >= 0) out.write(buf, 0, n);
-                return BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size());
-            }
-        } catch (Exception ignored) {
-            return null;
-        } finally {
-            if (conn != null) conn.disconnect();
-        }
+    private static void metric(Canvas x,Paint p,String ico,String title,String value,String sub,int xx,int wc,int vc){
+        text(x,p,ico,xx,425,22,wc,false);text(x,p,title,xx,450,13,Color.rgb(180,198,218),false);text(x,p,value,xx,480,15,wc,true);if(!sub.isEmpty())text(x,p,sub,xx,510,13,vc,false);
     }
+    private static void pill(Canvas x,Paint p,String s,int xx,int yy,int col){round(x,p,xx,yy,xx+(s.length()*8+30),yy+38,Color.argb(225,col==Color.rgb(55,166,255)?55:8,28,45),col,1);text(x,p,s,xx+15,yy+25,12,Color.WHITE,true);}
+    private static void round(Canvas x,Paint p,float l,float t,float r,float b,int fill,int stroke,float sw){p.setStyle(Paint.Style.FILL);p.setColor(fill);x.drawRoundRect(l,t,r,b,22,22,p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(sw);p.setColor(stroke);x.drawRoundRect(l,t,r,b,22,22,p);p.setStyle(Paint.Style.FILL);}
+    private static void text(Canvas x,Paint p,String s,float xx,float yy,float size,int col,boolean bold){p.setShader(null);p.setColor(col);p.setTextSize(size);p.setTypeface(Typeface.create("sans",bold?Typeface.BOLD:Typeface.NORMAL));x.drawText(s,xx,yy,p);}
+    private static String one(double n){return String.format(Locale.US,"%.1f",n);}
+    private static String wind(double d){String[] a={"północy","północnego wschodu","wschodu","południowego wschodu","południa","południowego zachodu","zachodu","północnego zachodu"};return a[(int)Math.round((((d%360)+360)%360)/45)%8];}
+    private static String dayLabel(String s,int i){if(i==0)return"DZIŚ";try{return new SimpleDateFormat("EEE",new Locale("pl","PL")).format(new SimpleDateFormat("yyyy-MM-dd",Locale.US).parse(s)).toUpperCase(new Locale("pl","PL")).replace(".","");}catch(Exception e){return"—";}}
+    private static String condition(int c){if(c==0)return"Bezchmurnie";if(c==1)return"Głównie bezchmurnie";if(c==2)return"Częściowe zachmurzenie";if(c==3)return"Pochmurno";if(c>=45&&c<=48)return"Mgła";if(c>=51&&c<=55)return"Mżawka";if(c>=61&&c<=82)return"Deszcz";if(c>=71&&c<=77)return"Śnieg";if(c>=95)return"Burza";return"Pogoda";}
+    private static String icon(int c){if(c==0)return"☀";if(c==1)return"🌤";if(c==2)return"⛅";if(c==3)return"☁";if(c>=45&&c<=48)return"🌫";if(c>=51&&c<=67)return"🌧";if(c>=71&&c<=77)return"❄";if(c>=80&&c<=82)return"🌦";if(c>=95)return"⛈";return"•";}
 
-    private static int lon2tile(double lon, int z) { return (int)Math.floor((lon + 180.0) / 360.0 * (1 << z)); }
-    private static int lat2tile(double lat, int z) { return (int)Math.floor((1 - Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2 * (1 << z)); }
-    private static double lonToPixel(double lon, int z) { return (lon + 180.0) / 360.0 * (1 << z) * TILE; }
-    private static double latToPixel(double lat, int z) { return (1 - Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2 * (1 << z) * TILE; }
-
-    private static void setClicks(Context c, RemoteViews v) {
-        Intent refresh = new Intent(c, PogodnikWeatherWidget.class).setAction(ACTION_REFRESH);
-        PendingIntent rp = PendingIntent.getBroadcast(c, 101, refresh, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        v.setOnClickPendingIntent(R.id.widget_refresh, rp);
-        Intent open = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
-        if (open != null) {
-            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            PendingIntent op = PendingIntent.getActivity(c, 102, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            v.setOnClickPendingIntent(R.id.widget_root, op);
-        }
+    private static Bitmap buildRadar(double lat,double lon){
+        try{
+            JSONObject meta=getJson("https://api.rainviewer.com/public/weather-maps.json");JSONArray past=meta.getJSONObject("radar").getJSONArray("past");if(past.length()==0)return null;
+            String host=meta.getString("host"),path=past.getJSONObject(past.length()-1).getString("path");int tx=lon2tile(lon,Z),ty=lat2tile(lat,Z);
+            Bitmap base=Bitmap.createBitmap(512,512,Bitmap.Config.ARGB_8888);Canvas c=new Canvas(base);
+            for(int dx=-1;dx<=0;dx++)for(int dy=-1;dy<=0;dy++){int xx=tx+dx,yy=ty+dy;Bitmap m=download("https://tile.openstreetmap.org/"+Z+"/"+xx+"/"+yy+".png");if(m!=null)c.drawBitmap(m,(dx+1)*256,(dy+1)*256,null);Bitmap r=download(host+path+"/256/"+Z+"/"+xx+"/"+yy+"/2/1_0.png");if(r!=null)c.drawBitmap(r,(dx+1)*256,(dy+1)*256,null);}
+            Paint p=new Paint(1);p.setColor(Color.WHITE);c.drawCircle(256,256,14,p);p.setColor(Color.rgb(35,140,255));c.drawCircle(256,256,9,p);return base;
+        }catch(Exception e){return null;}
     }
-
-    private static android.content.SharedPreferences getPrefs(Context c) {
-        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-    }
-
-    private static String one(double n) { return String.format(Locale.US, "%.1f", n); }
-
-    private static String dayLabel(String iso, int i) {
-        if (i == 0) return "DZIŚ";
-        try {
-            Date d = new SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(iso);
-            return new SimpleDateFormat("EEE", new Locale("pl","PL")).format(d).toUpperCase(new Locale("pl","PL")).replace(".", "");
-        } catch (Exception e) { return "DZIEŃ"; }
-    }
-
-    private static String condition(int c) {
-        switch(c) {
-            case 0: return "Bezchmurnie";
-            case 1: return "Głównie bezchmurnie";
-            case 2: return "Częściowe zachmurzenie";
-            case 3: return "Pochmurno";
-            case 45: case 48: return "Mgła";
-            case 51: case 53: case 55: return "Mżawka";
-            case 61: case 63: case 65: case 80: case 81: case 82: return "Deszcz";
-            case 71: case 73: case 75: case 77: return "Śnieg";
-            case 95: case 96: case 99: return "Burza";
-            default: return "Pogoda";
-        }
-    }
-
-    private static String windDirName(double deg) {
-        double d = ((deg % 360) + 360) % 360;
-        String[] dirs = {"północy","północnego wschodu","wschodu","południowego wschodu","południa","południowego zachodu","zachodu","północnego zachodu"};
-        return dirs[(int)Math.round(d / 45.0) % 8];
-    }
-
-    private static String icon(int c) {
-        if (c == 0) return "☀";
-        if (c == 1) return "🌤";
-        if (c == 2) return "⛅";
-        if (c == 3) return "☁";
-        if (c >= 45 && c <= 48) return "🌫";
-        if (c >= 51 && c <= 67) return "🌧";
-        if (c >= 71 && c <= 77) return "❄";
-        if (c >= 80 && c <= 82) return "🌦";
-        if (c >= 95) return "⛈";
-        return "•";
-    }
+    private static Bitmap download(String u){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL(u).openConnection();c.setConnectTimeout(5000);c.setReadTimeout(5000);c.setRequestProperty("User-Agent","Pogodnik-PL");if(c.getResponseCode()/100!=2)return null;ByteArrayOutputStream o=new ByteArrayOutputStream();try(InputStream in=c.getInputStream()){byte[] b=new byte[8192];int n;while((n=in.read(b))>0)o.write(b,0,n);}return BitmapFactory.decodeByteArray(o.toByteArray(),0,o.size());}catch(Exception e){return null;}finally{if(c!=null)c.disconnect();}}
+    private static JSONObject getJson(String u)throws Exception{HttpURLConnection c=(HttpURLConnection)new URL(u).openConnection();c.setConnectTimeout(8000);c.setReadTimeout(8000);try(BufferedReader r=new BufferedReader(new InputStreamReader(c.getInputStream()))){StringBuilder s=new StringBuilder();String z;while((z=r.readLine())!=null)s.append(z);return new JSONObject(s.toString());}finally{c.disconnect();}}
+    private static int lon2tile(double lon,int z){return(int)Math.floor((lon+180)/360*(1<<z));}
+    private static int lat2tile(double lat,int z){return(int)Math.floor((1-Math.log(Math.tan(Math.toRadians(lat))+1/Math.cos(Math.toRadians(lat)))/Math.PI)/2*(1<<z));}
+    private static void setClick(Context c,RemoteViews v){Intent i=c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());if(i!=null){PendingIntent p=PendingIntent.getActivity(c,102,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);v.setOnClickPendingIntent(R.id.widget_root,p);}}
+    private static android.content.SharedPreferences getPrefs(Context c){return c.getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
 }
