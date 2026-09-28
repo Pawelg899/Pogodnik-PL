@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 public class PogodnikWeatherWidget extends AppWidgetProvider {
     public static final String ACTION_REFRESH="pl.pogodnik.app.WIDGET_REFRESH";
     public static final String ACTION_LAYER="pl.pogodnik.app.WIDGET_LAYER";
+    public static void updateAll(Context c){ refreshAll(c); }
     private static final String PREFS="PogodnikWidgetPrefs";
     private static final ExecutorService EXECUTOR=Executors.newSingleThreadExecutor();
     private static final int Z=6,TILE=256;
