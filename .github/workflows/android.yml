@@ -37,6 +37,8 @@ jobs:
           cp android-widget/widget_weather.xml android/app/src/main/res/layout/widget_weather.xml
           cp android-widget/widget_bg.xml android/app/src/main/res/drawable/widget_bg.xml
           cp android-widget/widget_button.xml android/app/src/main/res/drawable/widget_button.xml
+          cp android-widget/widget_button_dark.xml android/app/src/main/res/drawable/widget_button_dark.xml
+          cp android-widget/widget_button_selected.xml android/app/src/main/res/drawable/widget_button_selected.xml
           cp android-widget/widget_info.xml android/app/src/main/res/xml/widget_info.xml
           cat > android/app/src/main/java/pl/pogodnik/app/MainActivity.java <<'JAVA'
           package pl.pogodnik.app;
