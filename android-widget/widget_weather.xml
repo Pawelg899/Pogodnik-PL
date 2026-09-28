@@ -4,10 +4,77 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#06101C">
+
     <ImageView
         android:id="@+id/widget_canvas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
+        android:scaleType="fitXY"
         android:contentDescription="Pogodnik-PL"/>
+
+    <TextView
+        android:id="@+id/widget_refresh"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="center"
+        android:text="↻"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/widget_radar_button"
+        android:layout_width="82dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="520dp"
+        android:layout_marginStart="44dp"
+        android:gravity="center"
+        android:text="RADAR"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/widget_lightning_button"
+        android:layout_width="120dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="520dp"
+        android:layout_marginStart="126dp"
+        android:gravity="center"
+        android:text="WYŁADOWANIA"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/widget_tsp_button"
+        android:layout_width="64dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="520dp"
+        android:layout_marginStart="246dp"
+        android:gravity="center"
+        android:text="TSP"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/widget_sat_button"
+        android:layout_width="64dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="520dp"
+        android:layout_marginStart="310dp"
+        android:gravity="center"
+        android:text="SAT"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:background="@android:color/transparent"/>
+
 </FrameLayout>
