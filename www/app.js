@@ -6,7 +6,8 @@ function windDirName(deg){const d=((Number(deg)%360)+360)%360;const dirs=["pół
 
 function loadSaved(){try{const a=JSON.parse(localStorage.getItem("pogodnik-places")||"[]");S.saved=Array.isArray(a)?a:[]}catch(e){S.saved=[]}}
 function saveSaved(){localStorage.setItem("pogodnik-places",JSON.stringify(S.saved))}
-function syncWidgetLocation(){try{if(Widget?.setLocation){return Widget.setLocation({lat:Number(S.lat),lon:Number(S.lon),name:S.locationName||"Moja lokalizacja"})}}catch(e){}return Promise.resolve()}\nfunction saveCurrentLocation(){localStorage.setItem("pogodnik-location",JSON.stringify({lat:S.lat,lon:S.lon,name:S.locationName}));syncWidgetLocation()}
+function syncWidgetLocation(){try{if(Widget?.setLocation){return Widget.setLocation({lat:Number(S.lat),lon:Number(S.lon),name:S.locationName||"Moja lokalizacja"})}}catch(e){}return Promise.resolve()}
+function saveCurrentLocation(){localStorage.setItem("pogodnik-location",JSON.stringify({lat:S.lat,lon:S.lon,name:S.locationName}));syncWidgetLocation()}
 function loadLocation(){try{const x=JSON.parse(localStorage.getItem("pogodnik-location"));if(x&&Number.isFinite(x.lat)&&Number.isFinite(x.lon)){S.lat=x.lat;S.lon=x.lon;S.locationName=x.name||"Zapisana lokalizacja";S.selectedName=S.locationName;return true}}catch(e){}return false}
 function setMarker(lat,lon){if(!S.marker){S.marker=L.circleMarker([lat,lon],{radius:9,color:"#fff",weight:3,fillColor:"#1677ff",fillOpacity:1}).addTo(S.map)}else S.marker.setLatLng([lat,lon])}
 function placeMarker(place){const icon=L.divIcon({className:"saved-marker-wrap",html:"<div class='saved-marker "+(place.type||"Inne").toLowerCase()+"'>"+iconFor(place.type)+"</div>",iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-17]});const m=L.marker([place.lat,place.lon],{icon}).addTo(S.map);m.on("click",()=>showPointWeather(place.lat,place.lon,place.name));S.savedMarkers.push(m)}
