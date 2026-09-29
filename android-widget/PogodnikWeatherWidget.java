@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 public class PogodnikWeatherWidget extends AppWidgetProvider {
     public static final String ACTION_REFRESH="pl.pogodnik.app.WIDGET_REFRESH";
     public static final String ACTION_LAYER="pl.pogodnik.app.WIDGET_LAYER";
+    public static final String ACTION_ZOOM="pl.pogodnik.app.WIDGET_ZOOM";
     private static final String PREFS="PogodnikWidgetPrefs";
     private static final ExecutorService EXECUTOR=Executors.newSingleThreadExecutor();
     private static final int Z=6;
@@ -39,7 +40,12 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     @Override public void onReceive(Context c, Intent i){
         super.onReceive(c,i);
         if(ACTION_REFRESH.equals(i.getAction())) refreshAll(c);
-        else if(ACTION_LAYER.equals(i.getAction())){
+        else if(ACTION_ZOOM.equals(i.getAction())){
+            int dz=i.getIntExtra("dz",0);
+            int z=Math.max(4,Math.min(9,getPrefs(c).getInt("zoom",6)+dz));
+            getPrefs(c).edit().putInt("zoom",z).apply();
+            refreshAll(c);
+        } else if(ACTION_LAYER.equals(i.getAction())){
             String layer=i.getStringExtra("layer");
             if(layer!=null) getPrefs(c).edit().putString("layer",layer).apply();
             refreshAll(c);
@@ -65,6 +71,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         final float lat=getPrefs(app).getFloat("lat",52.07f),lon=getPrefs(app).getFloat("lon",19.48f);
         final String place=getPrefs(app).getString("name","Moja lokalizacja");
         final String layer=getPrefs(app).getString("layer","RADAR");
+        final int zoom=getPrefs(app).getInt("zoom",6);
         EXECUTOR.execute(()->{
             JSONObject cur=null,daily=null,hourly=null; Bitmap map=null;
             try{
@@ -75,7 +82,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                     "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max";
                 JSONObject d=getJson(u);
                 cur=d.getJSONObject("current"); daily=d.getJSONObject("daily"); hourly=d.getJSONObject("hourly");
-                map=buildMap(lat,lon,layer);
+                map=buildMap(lat,lon,layer,zoom);
             }catch(Exception ignored){}
             Bitmap finalMap=map;
             JSONObject fcur=cur, fdaily=daily, fhourly=hourly;
@@ -123,12 +130,12 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
 
     private static void fillHourly(RemoteViews v, JSONObject h){
         if(h==null)return;
-        JSONArray times=h.optJSONArray("time"), temps=h.optJSONArray("temperature_2m");
+        JSONArray times=h.optJSONArray("time"), temps=h.optJSONArray("temperature_2m"), codes=h.optJSONArray("weather_code"), probs=h.optJSONArray("precipitation_probability");
         if(times==null||temps==null)return;
         int start=findNextHour(times);
         for(int j=0;j<5;j++){
             int i=start+j; if(i>=times.length()||i>=temps.length())break;
-            set(v, hourId(j,"t"), hourLabel(times.optString(i)));
+            set(v, hourId(j,"t"), hourLabel(times.optString(i))); set(v,hourId(j,"i"),icon(codes==null?0:codes.optInt(i,0))); set(v,hourId(j,"p"),probs==null?"":Math.round(probs.optDouble(i,0))+"%");
             int t=(int)Math.round(temps.optDouble(i,0));
             set(v, hourId(j,"v"), t+"°");
         }
@@ -143,11 +150,11 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     private static int hourId(int n,String part){
         String s="h"+n+part;
         switch(s){
-            case "h0t":return R.id.h0t;case "h0v":return R.id.h0v;
-            case "h1t":return R.id.h1t;case "h1v":return R.id.h1v;
-            case "h2t":return R.id.h2t;case "h2v":return R.id.h2v;
-            case "h3t":return R.id.h3t;case "h3v":return R.id.h3v;
-            case "h4t":return R.id.h4t;default:return R.id.h4v;
+            case "h0t":return R.id.h0t;case "h0i":return R.id.h0i;case "h0v":return R.id.h0v;case "h0p":return R.id.h0p;
+            case "h1t":return R.id.h1t;case "h1i":return R.id.h1i;case "h1v":return R.id.h1v;case "h1p":return R.id.h1p;
+            case "h2t":return R.id.h2t;case "h2i":return R.id.h2i;case "h2v":return R.id.h2v;case "h2p":return R.id.h2p;
+            case "h3t":return R.id.h3t;case "h3i":return R.id.h3i;case "h3v":return R.id.h3v;case "h3p":return R.id.h3p;
+            case "h4t":return R.id.h4t;case "h4i":return R.id.h4i;case "h4p":return R.id.h4p;default:return R.id.h4v;
         }
     }
 
@@ -174,7 +181,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         }
     }
 
-    private static Bitmap buildMap(double lat,double lon,String layer){
+    private static Bitmap buildMap(double lat,double lon,String layer,int Z){
         try{
             int tx=lon2tile(lon,Z),ty=lat2tile(lat,Z);
             Bitmap base=Bitmap.createBitmap(512,512,Bitmap.Config.ARGB_8888); Canvas c=new Canvas(base);
@@ -218,10 +225,15 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     private static void setClicks(Context c,RemoteViews v){
         Intent refresh=new Intent(c,PogodnikWeatherWidget.class).setAction(ACTION_REFRESH);
         v.setOnClickPendingIntent(R.id.widget_refresh,PendingIntent.getBroadcast(c,101,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        setZoom(c,v,R.id.widget_zoom_in,1,301); setZoom(c,v,R.id.widget_zoom_out,-1,302);
         setLayer(c,v,R.id.widget_radar_button,"RADAR",201);
         setLayer(c,v,R.id.widget_lightning_button,"LIGHTNING",202);
         setLayer(c,v,R.id.widget_tsp_button,"TSP",203);
         setLayer(c,v,R.id.widget_sat_button,"SAT",204);
+    }
+    private static void setZoom(Context c,RemoteViews v,int id,int dz,int req){
+        Intent i=new Intent(c,PogodnikWeatherWidget.class).setAction(ACTION_ZOOM).putExtra("dz",dz);
+        v.setOnClickPendingIntent(id,PendingIntent.getBroadcast(c,req,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
     }
     private static void setLayer(Context c,RemoteViews v,int id,String layer,int req){
         Intent i=new Intent(c,PogodnikWeatherWidget.class).setAction(ACTION_LAYER).putExtra("layer",layer);
