@@ -15,7 +15,7 @@ public class PogodnikWidgetPlugin extends Plugin {
         double lon = call.getDouble("lon", 19.48);
         String name = call.getString("name", "Moja lokalizacja");
         getContext().getSharedPreferences("PogodnikWidgetPrefs", Context.MODE_PRIVATE)
-                .edit().putFloat("lat", (float)lat).putFloat("lon", (float)lon).putString("name", name).apply();
+                .edit().putFloat("lat", (float)lat).putFloat("lon", (float)lon).putString("name", name).putBoolean("hasLocation", true).putString("source", "app").apply();
         PogodnikWeatherWidget.updateAll(getContext());
         call.resolve();
     }
