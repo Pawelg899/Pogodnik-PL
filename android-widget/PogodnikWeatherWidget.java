@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.*;
 import android.os.Bundle;
+import android.location.Location;
+import android.location.LocationManager;
 import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,7 +25,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     public static final String ACTION_ZOOM="pl.pogodnik.app.WIDGET_ZOOM";
     private static final String PREFS="PogodnikWidgetPrefs";
     private static final ExecutorService EXECUTOR=Executors.newSingleThreadExecutor();
-    private static final int Z=6;
+    private static final int Z=9;
 
     public static void updateAll(Context c){ refreshAll(c); }
 
@@ -68,10 +70,11 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
     private static void update(Context c, AppWidgetManager m, int[] ids){
         if(ids==null||ids.length==0)return;
         final Context app=c.getApplicationContext();
+        useNativeLocationIfNeeded(app);
         final float lat=getPrefs(app).getFloat("lat",52.07f),lon=getPrefs(app).getFloat("lon",19.48f);
         final String place=getPrefs(app).getString("name","Moja lokalizacja");
         final String layer=getPrefs(app).getString("layer","RADAR");
-        final int zoom=getPrefs(app).getInt("zoom",6);
+        final int zoom=getPrefs(app).getInt("zoom",9);
         EXECUTOR.execute(()->{
             JSONObject cur=null,daily=null,hourly=null; Bitmap map=null;
             try{
@@ -198,7 +201,7 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
                 else baseUrl="https://tile.openstreetmap.org/"+Z+"/"+xx+"/"+yy+".png";
                 bm=download(baseUrl); if(bm!=null)c.drawBitmap(bm,(dx+1)*256,(dy+1)*256,null);
                 if("RADAR".equals(layer)&&!radarPath.isEmpty()){
-                    Bitmap rm=download(radarHost+radarPath+"/256/"+Z+"/"+xx+"/"+yy+"/2/1_0.png"); if(rm!=null)c.drawBitmap(rm,(dx+1)*256,(dy+1)*256,null);
+                    Bitmap rm=download(radarHost+radarPath+"/256/"+Z+"/"+xx+"/"+yy+"/2/1_1.png"); if(rm!=null)c.drawBitmap(rm,(dx+1)*256,(dy+1)*256,null);
                 }
                 if("LIGHTNING".equals(layer)){
                     Bitmap lm=download("https://tiles.lightningmaps.org/?x="+xx+"&y="+yy+"&z="+Z+"&s=256&t=5&T=1"); if(lm!=null)c.drawBitmap(lm,(dx+1)*256,(dy+1)*256,null);
@@ -240,4 +243,21 @@ public class PogodnikWeatherWidget extends AppWidgetProvider {
         v.setOnClickPendingIntent(id,PendingIntent.getBroadcast(c,req,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
     }
     private static android.content.SharedPreferences getPrefs(Context c){return c.getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
+
+    private static void useNativeLocationIfNeeded(Context c){
+        android.content.SharedPreferences p=getPrefs(c);
+        if(p.getBoolean("hasLocation",false) && !"default".equals(p.getString("source","default"))) return;
+        try{
+            LocationManager lm=(LocationManager)c.getSystemService(Context.LOCATION_SERVICE);
+            if(androidx.core.content.ContextCompat.checkSelfPermission(c,android.Manifest.permission.ACCESS_COARSE_LOCATION)!=android.content.pm.PackageManager.PERMISSION_GRANTED &&
+               androidx.core.content.ContextCompat.checkSelfPermission(c,android.Manifest.permission.ACCESS_FINE_LOCATION)!=android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+            Location gps=lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location net=lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Location best=gps!=null?gps:net;
+            if(best!=null){
+                p.edit().putFloat("lat",(float)best.getLatitude()).putFloat("lon",(float)best.getLongitude())
+                    .putString("name","Moja lokalizacja").putBoolean("hasLocation",true).putString("source","gps").apply();
+            }
+        }catch(Exception ignored){}
+    }
 }
